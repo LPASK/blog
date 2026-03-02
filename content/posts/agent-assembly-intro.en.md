@@ -4,7 +4,7 @@ date: 2026-03-02
 draft: false
 ---
 
-**[agent-assembly](https://github.com/LPASK/agent-assembly)** — 5 bash functions, ~140 lines of code. This is what I use every day to fix the pain points of [Compound Engineering](https://github.com/EveryInc/compound-engineering-plugin) in practice.
+**[agent-assembly](https://github.com/LPASK/agent-assembly)** — 5 bash functions, ~140 lines of code. This is what I use every day to fix the pain points of doing [Compound Engineering](https://github.com/EveryInc/compound-engineering-plugin) across projects in Claude Code.
 
 The idea behind Compound Engineering is that working with an agent should accumulate compound interest — the longer you collaborate, the deeper the agent understands you. But some information is inherently cross-project: your technical background, cognitive patterns, decision-making preferences, current goals. These belong to *you*, not to any single project. Switch projects, and they're gone. Stuff everything into the System Prompt and it bloats out of control; leave it out and it gets forgotten.
 
