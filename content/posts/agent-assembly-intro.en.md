@@ -1,5 +1,5 @@
 ---
-title: "Making AI Agents Remember You: What's Left After Cutting 90% of the Design"
+title: "agent-assembly: The Pain Points of Compound Engineering, and the Answer After Iterating"
 date: 2026-03-02
 draft: false
 ---

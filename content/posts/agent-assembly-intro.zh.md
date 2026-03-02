@@ -1,5 +1,5 @@
 ---
-title: "让 AI Agent 认识你：三周砍掉 90% 设计后剩下的东西"
+title: "agent-assembly：复利工程的痛点，和反复迭代后的答案"
 date: 2026-03-02
 draft: false
 ---
