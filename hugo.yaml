@@ -1,0 +1,32 @@
+baseURL: https://lpask.github.io/blog/
+title: LazyBeaver's Blog
+theme: PaperMod
+
+defaultContentLanguage: zh
+defaultContentLanguageInSubdir: true
+
+languages:
+  zh:
+    languageName: 中文
+    weight: 1
+    params:
+      description: AI Agents, Compound Engineering, and more
+  en:
+    languageName: English
+    weight: 2
+    params:
+      description: AI Agents, Compound Engineering, and more
+
+params:
+  author: LazyBeaver
+  showReadingTime: true
+  showShareButtons: false
+  showPostNavLinks: true
+  defaultTheme: auto
+  showThemeToggle: true
+
+menu:
+  main:
+    - name: Posts
+      url: /posts/
+      weight: 1

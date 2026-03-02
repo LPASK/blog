@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>Posts on LazyBeaver's Blog</title><link>https://lpask.github.io/blog/zh/posts/</link><description>Recent content in Posts on LazyBeaver's Blog</description><generator>Hugo -- 0.157.0</generator><language>zh</language><lastBuildDate>Mon, 02 Mar 2026 00:00:00 +0000</lastBuildDate><atom:link href="https://lpask.github.io/blog/zh/posts/index.xml" rel="self" type="application/rss+xml"/><item><title>让 AI Agent 认识你：三周砍掉 90% 设计后剩下的东西</title><link>https://lpask.github.io/blog/zh/posts/agent-assembly-intro/</link><pubDate>Mon, 02 Mar 2026 00:00:00 +0000</pubDate><guid>https://lpask.github.io/blog/zh/posts/agent-assembly-intro/</guid><description>&lt;p&gt;用 Claude Code 每天工作 12 小时以上，我遇到一个很具体的问题：&lt;strong&gt;agent 不认识我&lt;/strong&gt;。&lt;/p&gt;
+&lt;p&gt;&lt;a href="https://github.com/EveryInc/compound-engineering-plugin"&gt;复利工程（Compound Engineering）&lt;/a&gt;的核心思路是：在做具体项目的过程中积累复利——你和 agent 协作得越久，agent 对你的理解越深，给出的判断和质疑越准。但有一类信息天然是跨项目的：你的技术背景、认知模式、决策偏好、当前目标。这些东西属于&amp;quot;你&amp;quot;而不是属于某个项目。一换项目，这些全丢了。&lt;/p&gt;
+&lt;p&gt;我花了三周探索怎么解决这个问题。走了很多弯路，砍掉了 90% 的设计。这篇讲的是过程和教训。&lt;/p&gt;
+&lt;hr&gt;
+&lt;h2 id="第一阶段一体化"&gt;第一阶段：一体化&lt;/h2&gt;
+&lt;p&gt;跟大多数人的想法一样，最初是把所有东西放在一个项目里。&lt;/p&gt;
+&lt;p&gt;我的知识库项目——skills、个人画像、认知模式、记忆系统、feed 处理流程，全堆进配置。Profile 越写越细，行为规则越加越多，System Prompt 攒到了上千行。&lt;/p&gt;
+&lt;p&gt;实际用起来撑不住。因为所有东西都在一个项目里，使用过程中不断积累新的规则和 prompt——System Prompt 越来越长、越来越臃肿，agent 的指令遵从能力持续下降。写了上千行规则，该触发的不触发，该遵守的不遵守。加上 hook 不断往上下文里灌记忆、agent 自己也不断读文件，非 System Prompt 的内容在长对话中被压缩丢失，agent 基于残缺信息做出错误判断。&lt;/p&gt;
+&lt;p&gt;这就是&amp;quot;单一仓库&amp;quot;的问题。所有东西堆在一起，只会越来越膨胀，直到不可用。&lt;/p&gt;
+&lt;h2 id="第一个想法用-plugin-一步到位"&gt;第一个想法：用 Plugin 一步到位&lt;/h2&gt;
+&lt;p&gt;单一仓库不行，那就拆出来。最初的设想很简单：做一个 Plugin，装到每个项目里，自动注入个人 profile。一个 Plugin 解决所有问题。&lt;/p&gt;
+&lt;p&gt;试了之后发现，Plugin 机制注入不了 System Prompt。&lt;/p&gt;
+&lt;p&gt;这才是关键。为什么一定要进 System Prompt？因为这里面藏着一个两难：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;放进 System Prompt&lt;/strong&gt;：内容不会被压缩、不会遗忘，但 System Prompt 越长指令遵从越差，而且使用过程中只会越积越多。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;不放 System Prompt&lt;/strong&gt;：System Prompt 保持精简，但内容在长对话中会被压缩丢失，模型随时可能遗忘。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;全塞进去不行，全不塞也不行。需要一个机制来控制&lt;strong&gt;什么该进 System Prompt、什么不该进&lt;/strong&gt;——而且这个决策不能交给运行时的模型，得在启动前就确定好。&lt;/p&gt;
+&lt;p&gt;Plugin 机制做不到这件事。得换一个思路。&lt;/p&gt;
+&lt;h2 id="第二阶段拆分与踩坑"&gt;第二阶段：拆分与踩坑&lt;/h2&gt;
+&lt;p&gt;于是我拆了。分出一个独立项目做 Manager——专门管&amp;quot;我是谁&amp;quot;，让每个项目的 agent 保持单一职责。思路是：Manager 控制哪些 profile 模块注入哪个项目的 System Prompt，解决前面那个两难。&lt;/p&gt;</description></item></channel></rss>
