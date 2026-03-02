@@ -4,11 +4,11 @@ date: 2026-03-02
 draft: false
 ---
 
-I use Claude Code 12+ hours a day across multiple projects. Every time I switch projects, the agent starts as a stranger.
+**[agent-assembly](https://github.com/LPASK/agent-assembly)** — 5 bash functions, ~140 lines of code. This is what I use every day to fix the pain points of [Compound Engineering](https://github.com/EveryInc/compound-engineering-plugin) in practice.
 
-The idea behind [Compound Engineering](https://github.com/EveryInc/compound-engineering-plugin) is that working with an agent should accumulate compound interest — the longer you collaborate, the deeper the agent understands you, the better its judgment gets. But some information is inherently cross-project: your technical background, cognitive patterns, decision-making preferences, current goals. These belong to *you*, not to any single project. Switch to a different project, and they're gone.
+The idea behind Compound Engineering is that working with an agent should accumulate compound interest — the longer you collaborate, the deeper the agent understands you. But some information is inherently cross-project: your technical background, cognitive patterns, decision-making preferences, current goals. These belong to *you*, not to any single project. Switch projects, and they're gone. Stuff everything into the System Prompt and it bloats out of control; leave it out and it gets forgotten.
 
-I spent three weeks exploring how to fix this. Tried multiple approaches, watched them break, cut 90% of the design. This is the story and the lessons.
+This post is about how I got to that answer — the wrong turns, what I cut, and what survived.
 
 ---
 

@@ -4,11 +4,11 @@ date: 2026-03-02
 draft: false
 ---
 
-用 Claude Code 每天工作 12 小时以上，我遇到一个很具体的问题：**agent 不认识我**。
+**[agent-assembly](https://github.com/LPASK/agent-assembly)** — 5 个 bash 函数，~140 行代码。这是我每天在用的方案，解决的是[复利工程（Compound Engineering）](https://github.com/EveryInc/compound-engineering-plugin)在实际使用中的痛点。
 
-[复利工程（Compound Engineering）](https://github.com/EveryInc/compound-engineering-plugin)的核心思路是：在做具体项目的过程中积累复利——你和 agent 协作得越久，agent 对你的理解越深，给出的判断和质疑越准。但有一类信息天然是跨项目的：你的技术背景、认知模式、决策偏好、当前目标。这些东西属于"你"而不是属于某个项目。一换项目，这些全丢了。
+复利工程的核心思路是：你和 agent 协作得越久，agent 对你的理解越深，给出的判断和质疑越准。但有一类信息天然是跨项目的：你的技术背景、认知模式、决策偏好、当前目标。这些东西属于"你"而不是属于某个项目。一换项目，这些全丢了。System Prompt 越塞越多就膨胀失控，不塞又会被遗忘。
 
-我花了三周探索怎么解决这个问题。走了很多弯路，砍掉了 90% 的设计。这篇讲的是过程和教训。
+这篇讲的是这个答案怎么来的——走了哪些弯路，砍掉了什么，留下了什么。
 
 ---
 
