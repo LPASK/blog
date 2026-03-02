@@ -28,5 +28,5 @@ params:
 menu:
   main:
     - name: Posts
-      url: /posts/
+      url: posts/
       weight: 1
