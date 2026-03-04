@@ -4,68 +4,50 @@ date: 2026-03-02
 draft: false
 ---
 
-**[agent-assembly](https://github.com/LPASK/agent-assembly)** — 5 bash functions, ~140 lines of code. This is what I use every day to fix the pain points of doing [Compound Engineering](https://github.com/EveryInc/compound-engineering-plugin) across projects in Claude Code.
+During a periodic review I found a bug: I'd written over a thousand lines of System Prompt rules, and many of the principles I'd set up simply weren't triggering. The rules themselves were fine — the problem was that the agent's instruction-following ability had been steadily degrading as the System Prompt grew. I'd accumulated a lot, but very little was actually being executed.
 
-The idea behind Compound Engineering is that working with an agent should accumulate compound interest — the longer you collaborate, the deeper the agent understands you. But some information is inherently cross-project: your technical background, cognitive patterns, decision-making preferences, current goals. These belong to *you*, not to any single project. Switch projects, and they're gone. Stuff everything into the System Prompt and it bloats out of control; leave it out and it gets forgotten.
+That bug made me realize the problem wasn't the rules. It was the entire architecture.
 
-This post is about how I got to that answer — the wrong turns, what I cut, and what survived.
+Three weeks of iteration later, after cutting 90% of the design, I ended up with 5 bash functions and 140 lines of code: **[agent-assembly](https://github.com/LPASK/agent-assembly)**. It solves the pain points of doing [Compound Engineering](https://github.com/EveryInc/compound-engineering-plugin) across projects in Claude Code — your technical background, cognitive patterns, decision-making preferences, current goals. These belong to *you*, not to any single project. Switch projects, and they're gone.
+
+This post is about how I got to that answer.
 
 ---
 
-## Phase 1: The Monolith
+## Starting Point: Monolith Bloat
 
-Like most people, my first instinct was to put everything in one place.
+Everything started in one project — skills, personal profile, cognitive patterns, memory system, feed pipelines, all piled into the same config. The System Prompt kept growing, the agent started making judgments based on incomplete information. The structural problem with a monolith: it only grows, never shrinks.
 
-I had a knowledge base project. Skills, personal profile, cognitive patterns, memory system, feed pipelines — all piled into the same config. The profile grew more detailed. Behavioral rules accumulated. The system prompt passed 1,000 lines.
+Splitting was the obvious direction, but how? There's a dilemma:
 
-In practice, it couldn't hold up. Because everything lived in one project, new rules and prompts kept accumulating — the system prompt grew longer and more bloated over time, and the agent's instruction-following ability steadily degraded. A thousand lines of rules, and half of them stopped being followed. On top of that, hooks kept injecting memory and the agent kept reading files. Non-System-Prompt content got compressed away during long sessions, and the agent started making judgments based on incomplete information.
+- **Put it in the System Prompt**: Won't be compressed or forgotten, but the longer it gets, the worse instruction-following becomes — and it only grows over time.
+- **Keep it out**: Stays lean, but content gets compressed away in long sessions. The model forgets.
 
-This is the monorepo problem. Everything in one place only grows until it breaks.
+All in doesn't work. All out doesn't work. You need a mechanism to decide **what goes in and what doesn't** — before launch, not at runtime.
 
-## The First Idea: A Plugin to Solve Everything
+## The Traps
 
-If the monorepo doesn't work, split it out. The initial vision was simple: build a plugin, install it in each project, and have it automatically inject your profile. One plugin solves everything.
+The direction was clear — split into modules, inject on demand. But the implementation was full of traps.
 
-Tried it. The plugin mechanism can't inject into the System Prompt.
+**Plugin.** The most intuitive approach: build a plugin, install it in each project, auto-inject the profile. Tried it. The plugin mechanism can't inject into the System Prompt. Dead end.
 
-This is where it gets interesting. Why does it *have* to be in the System Prompt? Because there's a fundamental dilemma:
+**Hook loop.** Rules in the System Prompt don't always get followed, so use hooks for hard guarantees? I wrote a Stop hook: block session exit if the agent hasn't written today's memory. The block message triggered the agent to respond, the response triggered another exit attempt, which triggered the hook again. Same message, 60 times in a loop. Root cause: hand-assembled configs with no proper testing.
 
-- **Put it in the System Prompt**: Content won't be compressed or forgotten, but the longer the System Prompt gets, the worse instruction-following becomes — and it only grows over time.
-- **Keep it out of the System Prompt**: The System Prompt stays lean, but content gets compressed away in long sessions. The model forgets.
+**Config merging.** The Manager needs to inject configs into each project, but each project already has its own config file. First approach: runtime merge on every launch — deep JSON merge, corruption detection, conflict handling. Then I realized it was completely backwards: merging on every launch means risking conflicts on every launch. The right approach: a one-time "compilation" step at setup, then just run a fixed script forever.
 
-All in doesn't work. All out doesn't work. You need a mechanism to control **what goes into the System Prompt and what doesn't** — and that decision can't be left to the model at runtime. It has to be settled before launch.
+**Over-abstraction.** What goes in the system prompt, what's read at startup, what hooks inject — a simple list covers it. But I'd built a four-layer context model and various registries. During a periodic review I realized these abstractions weren't helping results. The bottleneck was me — the more complex the system, the harder it was to manage. Every time I cut a "well-designed" module, the system actually got better.
 
-The plugin mechanism can't do this. Time for a different approach.
+## A Detour
 
-## Phase 2: The Split and the Failures
+I also tried building a standalone Manager agent. Spent three or four days with [Pi](https://github.com/badlogic/pi-mono), and it felt like I was making progress — more and more pieces coming together. Then I suddenly realized: this work has no payoff. Managing my own provider, handling context assembly, making model calls — Claude Code had already solved all of this. I was reinventing the wheel. Dropped it without much hesitation — after already cutting the four-layer context model and various registries, I'd lost the attachment to throwing away my own work.
 
-So I split it. Pulled out a separate project as a Manager — dedicated to "who I am" across all projects. Each project's agent stays single-purpose; the Manager controls which profile modules get injected into which project's System Prompt. This was the right direction for the dilemma above.
+Building within an established framework saves all the unnecessary trouble: no provider configuration, no infrastructure maintenance, new capabilities come for free.
 
-The direction was right. The implementation was full of traps.
+## The Final Answer
 
-**Hooks.** Rules in the System Prompt don't always get followed (the lesson from Phase 1). Can hooks provide hard guarantees instead? I wrote a Stop hook: block session exit if the agent hasn't written today's memory. Reasonable logic — but the hook's block message triggered the agent to respond, the response triggered another exit attempt, which triggered the hook again. Same message, 60 times in a loop. The real issue: no proper testing. When you assemble configs by hand each time, it works once and breaks the next. Anything verified should be locked into a stable script — which is exactly where the final solution ended up.
+Full circle, back to the simplest idea: if you're going to use a mature framework, just do the assembly on top of it. A "compilation" step before launch — put together the modules you need, then let the framework run.
 
-**Config merging.** The Manager needs to inject hook configurations into each project. But each project already has its own config file. How do you combine them? The first approach: runtime merge on every launch — deep JSON merge, corruption detection, conflict handling. Then I realized this was completely backwards. If you merge on every launch, you risk conflicts on every launch. The right approach: a one-time "compilation" step when you first set up a project. Resolve all conflicts there. After that, just run a fixed script. One-time setup, permanent execution.
-
-**Over-abstraction.** What goes in the system prompt, what's read at startup, what hooks inject — a simple list covers it. But I'd built a four-layer context model and various registries to manage these decisions. Wrapping simple things in complex frameworks only adds maintenance cost.
-
-Every time I cut something "well-designed," the system actually got better.
-
-## Phase 3: Why Not Build a Standalone Agent?
-
-I also went down the path of building a dedicated Manager agent. Spent over a week with [Pi](https://github.com/badlogic/pi-mono) — easy to pick up, even fun at first, but the deeper I went, the more traps I hit. Managing my own provider, handling context assembly, making model calls — most of my time went to solving infrastructure problems that Claude Code had already solved. Gave up. Standard frameworks win.
-
-That experience also made it clear that building within an established framework saves a lot of unnecessary trouble:
-
-1. **Everyone uses different agent CLIs.** Requiring users to configure their own provider and switch tools raises the barrier fast.
-2. **Claude Code uses your Claude subscription directly.** No separate API key. Currently the simplest path to Opus.
-3. **Maintenance cost.** Building within the Claude Code ecosystem means new capabilities come for free. Building your own means chasing every update yourself.
-
-## The Result: 5 Bash Functions
-
-Full circle. If you're going to use a mature framework anyway, just do the assembly on top of it. No need to reinvent the wheel — just a "compilation" step before launch that puts together what you need, then let the framework run.
-
-**agent-assembly** — 5 bash functions, ~140 lines of code.
+**[agent-assembly](https://github.com/LPASK/agent-assembly)** — 5 bash functions, ~140 lines.
 
 ```
 assemble_modules  → Concatenate selected profile modules into CLAUDE.local.md (System Prompt)
@@ -75,18 +57,14 @@ ensure_gitignore  → Maintain gitignore for generated files
 launch            → Start the agent
 ```
 
-Each project gets a short launcher script — roughly 15 lines. Pick the modules this project needs (technical background, cognitive patterns, goals, memory), write the script, run it. A coding project assembles your technical background and cognitive patterns. A knowledge base assembles your reading interests and goals. Each agent only sees the parts of you it needs.
+Each project gets a short launcher script. A coding project assembles your technical background and cognitive patterns. A knowledge base assembles your reading interests and goals. Each agent only sees the parts of you it needs.
 
-This is the answer to the dilemma: not all in, not all out — **each project assembles only the modules it needs into the System Prompt**, keeping it both personal and lean.
-
-And because it's just launcher scripts, you define how it's used. Want an interactive conversation window? A background session running tasks silently? Remote control from your phone? Just describe what you need and let the model write the launcher for you. Assemble modules on demand, define your own launch style.
+This is the answer to the dilemma: not all in, not all out — **each project assembles only the modules it needs into the System Prompt**.
 
 ---
 
-Three takeaways from three weeks:
+The biggest lesson from three weeks: **agent systems are not like traditional software — if you explain things clearly, the model understands.** A thousand lines of rules, a four-layer context model, a standalone Manager agent — all of these were attempts to compensate for human judgment with system complexity. But more architecture doesn't help the model understand better. It just makes the system harder for you to maintain.
 
-1. **Simple beats complex.** A thousand lines of behavioral rules performed worse than a concise version. The more complexity you pile on, the less control you have — the KISS principle ("Keep It Simple, Stupid") still holds in the age of agents.
-2. **Let the model be autonomous where it should be.** You don't need to do everything manually. Just do two things well: accumulate good modules, and provide good context. Let the model figure out which modules you need and assemble them for you.
-3. **Lock down what should be locked down.** When something works, make it permanent — write it into code and scripts. Give the model room on execution, but where stability matters, use code.
+140 lines ended up doing more than the previous thousand. Not because there's anything magic about 140 lines, but because after cutting the complexity, every remaining line was something I could understand, maintain, and trust.
 
-This is what I use every day. If you're frustrated by similar problems, point your agent at this repo and see if the approach fits: https://github.com/LPASK/agent-assembly/releases/tag/v0.1.0
+If you're working across projects in Claude Code and frustrated by lost profiles and System Prompt bloat, give this a try: https://github.com/LPASK/agent-assembly
